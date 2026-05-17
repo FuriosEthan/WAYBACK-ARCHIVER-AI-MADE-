@@ -1,0 +1,48 @@
+name: Publish Release
+
+# Triggers when you push a tag like v1.18.0
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create releases and upload assets
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Extract the version number from VERSION = "x.y.z" in wayback_gui.py
+      - name: Read version from script
+        id: version
+        run: |
+          VERSION=$(grep -oP '(?<=VERSION = ")[^"]+' wayback_gui.py)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Found version: $VERSION"
+
+      # Create the GitHub release and upload wayback_gui.py as an asset
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Wayback Archiver v${{ steps.version.outputs.version }}"
+          body: |
+            ## Wayback Archiver v${{ steps.version.outputs.version }}
+
+            ### How to update
+            Open the app and click **🔄 Update** — it will detect this release automatically and install it with one click.
+
+            ### Manual install
+            Download `wayback_gui.py` below and replace your existing file.
+
+            ### Requirements
+            ```
+            pip install requests
+            ```
+          files: wayback_gui.py
+          draft: false
+          prerelease: false
